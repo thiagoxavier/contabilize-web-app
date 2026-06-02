@@ -5,6 +5,4 @@ dist
 .agent
 .claude
 README.md
-Dockerfile
-nginx.conf
 npm-debug.log
