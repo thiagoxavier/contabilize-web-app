@@ -34,6 +34,7 @@ export function ClientesPage({ onToast }) {
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(null); // { mode: 'new'|'edit', data? }
   const [tempPasswordModal, setTempPasswordModal] = useState(null); // { name, password }
+  const [cofreUser, setCofreUser] = useState(null);
   const perPage = 10;
 
   const loadStarted = useRef(false);
@@ -289,6 +290,9 @@ export function ClientesPage({ onToast }) {
                     </td>
                     <td>
                       <div className="row-actions">
+                        <button title="Visualizar Cofre" onClick={() => setCofreUser(u)}>
+                          <Icon name="lock" size={14} />
+                        </button>
                         <button title="Resetar Senha" onClick={() => handleResetPassword(u)}>
                           <Icon name="key" size={14} />
                         </button>
@@ -359,6 +363,14 @@ export function ClientesPage({ onToast }) {
           name={tempPasswordModal.name} 
           password={tempPasswordModal.password} 
           onClose={() => setTempPasswordModal(null)} 
+        />
+      )}
+
+      {cofreUser && (
+        <CofreClienteModal
+          user={cofreUser}
+          onClose={() => setCofreUser(null)}
+          onToast={onToast}
         />
       )}
     </div>
@@ -646,3 +658,229 @@ function TempPasswordModal({ name, password, onClose }) {
     </div>
   );
 }
+
+// ============================================================
+// MODAL — View Client Credentials (Cofre)
+// ============================================================
+function CofreClienteModal({ user, onClose, onToast }) {
+  const [credentials, setCredentials] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshCount, setRefreshCount] = useState(0);
+  
+  // Local state for revealed passwords and values
+  const [revealed, setRevealed] = useState({}); // { [credId]: boolean }
+  const [decryptedPasswords, setDecryptedPasswords] = useState({}); // { [credId]: string }
+  const [copyingId, setCopyingId] = useState(null); // to show checkmark briefly
+
+  const overlayRef = useRef(null);
+  const shouldClose = useRef(false);
+
+  // Esc key closure
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Load user insurer credentials
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await apiRequest(`/Usuarios/${user.id}/seguradoras`);
+        if (active) setCredentials(data || []);
+      } catch (err) {
+        if (active) setError(err.message || "Erro ao carregar cofre do usuário.");
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, [user.id, refreshCount]);
+
+  const loadCredentials = () => {
+    setRefreshCount(c => c + 1);
+  };
+
+  const handleMouseDown = (e) => {
+    if (e.target === overlayRef.current) {
+      shouldClose.current = true;
+    } else {
+      shouldClose.current = false;
+    }
+  };
+
+  const handleMouseUp = (e) => {
+    if (shouldClose.current && e.target === overlayRef.current) {
+      onClose();
+    }
+  };
+
+  const handleReveal = async (credId) => {
+    // If we are about to reveal and don't have the password, fetch it
+    if (!revealed[credId] && !decryptedPasswords[credId]) {
+      try {
+        const result = await apiRequest(`/Usuarios/${user.id}/seguradoras/${credId}/senha`);
+        setDecryptedPasswords(prev => ({ ...prev, [credId]: result.senha }));
+      } catch (err) {
+        onToast?.(err.message || "Erro ao descriptografar senha.");
+        return;
+      }
+    }
+    setRevealed(prev => ({ ...prev, [credId]: !prev[credId] }));
+  };
+
+  const handleCopy = async (credId) => {
+    try {
+      let pwd = decryptedPasswords[credId];
+      if (!pwd) {
+        const result = await apiRequest(`/Usuarios/${user.id}/seguradoras/${credId}/senha`);
+        pwd = result.senha;
+        setDecryptedPasswords(prev => ({ ...prev, [credId]: pwd }));
+      }
+      await navigator.clipboard.writeText(pwd);
+      setCopyingId(credId);
+      onToast?.("Senha copiada com sucesso!");
+      setTimeout(() => setCopyingId(null), 1200);
+    } catch (err) {
+      onToast?.(err.message || "Erro ao copiar senha.");
+    }
+  };
+
+  return (
+    <div 
+      ref={overlayRef}
+      className="modal-overlay" 
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+    >
+      <div 
+        className="modal" 
+        style={{ maxWidth: 680 }} 
+        onMouseDown={e => e.stopPropagation()} 
+        onMouseUp={e => e.stopPropagation()}
+      >
+        <div className="modal-head">
+          <div>
+            <h3>Cofre de Senhas — {user.nome}</h3>
+            <div className="sub">Visualização de credenciais de seguradoras cadastradas por este cliente. Todas as leituras são auditadas.</div>
+          </div>
+          <button className="modal-close" onClick={onClose}>
+            <Icon name="chevDown" size={18} style={{ transform: "rotate(45deg)" }} />
+          </button>
+        </div>
+
+        <div className="modal-body" style={{ minHeight: 200, maxHeight: 400, overflowY: 'auto' }}>
+          {isLoading ? (
+            <div className="empty" style={{ padding: '40px 0' }}>
+              <div className="spinner" style={{ border: '3px solid rgba(0,0,0,0.1)', borderTop: '3px solid var(--brand-primary)', borderRadius: '50%', width: 24, height: 24, animation: 'spin 1s linear infinite', margin: '0 auto 12px' }}></div>
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+              <h3>Carregando credenciais...</h3>
+            </div>
+          ) : error ? (
+            <div className="empty" style={{ padding: '30px 0' }}>
+              <Icon name="alert" size={36} stroke={1.4} style={{ color: 'var(--danger)', marginBottom: 12 }} />
+              <h3>Erro ao carregar dados</h3>
+              <p>{error}</p>
+              <button className="btn secondary btn-sm" onClick={loadCredentials} style={{ marginTop: 12 }}>
+                <Icon name="refresh" size={12} /> Tentar novamente
+              </button>
+            </div>
+          ) : credentials.length === 0 ? (
+            <div className="empty" style={{ padding: '40px 0' }}>
+              <Icon name="lock" size={36} stroke={1.4} style={{ color: 'var(--muted)', marginBottom: 12 }} />
+              <h3>Nenhuma senha cadastrada</h3>
+              <p>Este cliente ainda não cadastrou nenhuma credencial de seguradora.</p>
+            </div>
+          ) : (
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--rule-2)' }}>
+                  <th style={{ textAlign: 'left', padding: '8px 12px' }}>Seguradora</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px' }}>Categoria</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px' }}>Usuário</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px' }}>Senha</th>
+                  <th style={{ textAlign: 'right', padding: '8px 12px' }}>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {credentials.map(c => {
+                  const isRevealed = !!revealed[c.id];
+                  const plainPassword = decryptedPasswords[c.id];
+                  const displayPassword = isRevealed ? (plainPassword || c.senhaMascarada) : (c.senhaMascarada || "••••••••••••");
+                  const isCopyOk = copyingId === c.id;
+
+                  return (
+                    <tr key={c.id} style={{ borderBottom: '1px solid var(--rule)' }}>
+                      <td style={{ padding: '12px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--ink-900)' }}>{c.nome}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--muted)' }}>{c.url}</div>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span className="tag-cat" style={{ color: 'var(--ink-800)', borderColor: 'var(--rule)', background: 'var(--paper)' }}>{c.categoria}</span>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '12px', background: 'var(--paper)', padding: '2px 6px', borderRadius: 4 }}>{c.login}</span>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: '12px' }}>
+                          {displayPassword}
+                          <button 
+                            onClick={() => handleReveal(c.id)} 
+                            title={isRevealed ? "Ocultar" : "Revelar"}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', color: 'var(--ink-600)' }}
+                          >
+                            <Icon name={isRevealed ? "eyeOff" : "eye"} size={14} />
+                          </button>
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                          <button 
+                            className={`btn ghost btn-sm ${isCopyOk ? 'ok' : ''}`}
+                            onClick={() => handleCopy(c.id)} 
+                            title="Copiar Senha"
+                            style={{ 
+                              padding: '4px 8px', 
+                              color: isCopyOk ? 'var(--green-deep)' : 'var(--ink-700)',
+                              background: isCopyOk ? 'var(--green-tint)' : 'transparent',
+                              borderColor: isCopyOk ? 'var(--green-soft)' : 'transparent',
+                              borderRadius: 6,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <Icon name={isCopyOk ? "check" : "copy"} size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div className="modal-foot">
+          <div className="left">
+            <Icon name="clock" size={14} /> Acesso de leitura registrado na auditoria
+          </div>
+          <div className="right">
+            <button className="btn primary" onClick={onClose}>Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

@@ -1,4 +1,6 @@
-const API_BASE_URL = 'https://poc-contabilize-api-client.wcar95.easypanel.host/api';
+//const API_BASE_URL = 'https://poc-contabilize-api-client.wcar95.easypanel.host/api';
+const API_BASE_URL = 'https://localhost:7027/api';
+
 
 export function decodeJwt(token) {
   try {
