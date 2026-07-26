@@ -1,5 +1,5 @@
-const API_BASE_URL = 'https://poc-contabilize-api-client.wcar95.easypanel.host/api';
-//const API_BASE_URL = 'https://localhost:7027/api';
+//const API_BASE_URL = 'https://poc-contabilize-api-client.wcar95.easypanel.host/api';
+const API_BASE_URL = 'https://localhost:7027/api';
 
 
 export function decodeJwt(token) {
@@ -37,7 +37,7 @@ export async function apiRequest(endpoint, options = {}) {
     });
   } catch (error) {
     if (error.message === 'Failed to fetch' || error.message?.includes('fetch') || error.name === 'TypeError') {
-      throw new Error('Tivemos um problema na comunicação com o servidor, favor contactar a Contabilize');
+      throw new Error('Tivemos um problema na comunicação com o servidor, favor contactar a Contabilize', { cause: error });
     }
     throw error;
   }

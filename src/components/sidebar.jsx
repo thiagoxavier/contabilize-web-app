@@ -23,14 +23,22 @@ export function Sidebar({ active = "senhas", counts = {}, user, onLogout, telas 
     { group: "Operação", links: [
       { id: "senhas", label: "Senhas", icon: "key", count: counts.senhas, screenCode: "geren_seguros" },
       { id: "clientes", label: "Clientes", icon: "users", count: counts.clientes, screenCode: "geren_usuarios" },
+      { id: "abertura", label: "Abertura de empresa", icon: "file", count: counts.abertura, screenCode: "abertura_empresa" },
     ]},
   ];
 
   // Filter links based on user screens
   const items = allItems.map(sec => {
     const filteredLinks = sec.links.filter(l => {
+      const isAdmin = user?.roles?.some(r => {
+        const lower = String(r).toLowerCase();
+        return lower === 'admin' || lower === 'administrador';
+      }) || user?.subtitle?.toLowerCase().includes('admin');
+
+      if (isAdmin) return true;
+
       if (telas && telas.length > 0) {
-        return telas.some(t => t.codigo === l.screenCode);
+        return telas.some(t => t.codigo === l.screenCode || (l.id === "abertura" && t.codigo === "abertura"));
       }
       // Fallback: show senhas by default while permissions are loading
       return l.id === "senhas";

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abertura de empresa — Societário</title>
+<style>
+  :root {
+    --allos-teal: #006E7B;
+    --navy-900: #233354;
+    --navy-300: #9FA2BF;
+
+    --blue-700: #0061F4;
+    --blue-600: #1A75FF;
+    --blue-100: #E8F1FF;
+
+    --grey-900: #323232;
+    --grey-600: #757575;
+    --grey-400: #A1A1A1;
+    --grey-300: #DADADA;
+    --grey-200: #EBEBEB;
+    --grey-100: #F6F8FB;
+    --grey-50:  #F8F9FC;
+    --white: #FFFFFF;
+
+    --red-600: #F42500;
+    --green-500: #15C170;
+    --green-100: #ECFBE6;
+
+    --color-primary: var(--blue-600);
+    --color-primary-hover: var(--blue-700);
+    --color-danger: var(--red-600);
+
+    --text-strong: var(--navy-900);
+    --text-body: var(--grey-900);
+    --text-secondary: var(--grey-600);
+    --text-placeholder: var(--grey-400);
+    --text-on-primary: var(--white);
+
+    --surface-page: var(--grey-50);
+    --surface-card: var(--white);
+
+    --border-default: var(--grey-300);
+    --border-subtle: var(--grey-200);
+    --border-strong: var(--grey-400);
+
+    --radius-xs: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-pill: 999px;
+
+    --space-2: 8px;
+    --space-3: 12px;
+
+    --shadow-sm: 0 1px 6px rgba(0,0,0,0.12);
+    --shadow-lg: 0 8px 28px rgba(159,162,191,0.32), 0 2px 8px rgba(159,162,191,0.18);
+
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --dur-fast: 120ms;
+
+    --font-brand: 'Roboto', -apple-system, 'Segoe UI', Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font-family: var(--font-brand); background: var(--surface-page); color: var(--text-body); }
+
+  ::-webkit-scrollbar { height: 10px; width: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--grey-300); border-radius: 6px; }
+
+  .icon { display: inline-flex; flex-shrink: 0; color: currentColor; }
+
+  .app { min-height: 100vh; display: flex; flex-direction: column; }
+
+  .topbar { padding: 28px 32px 0; display: flex; flex-direction: column; gap: 16px; }
+
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+  .breadcrumb .icon { color: var(--text-placeholder); }
+  .breadcrumb .current { color: var(--text-strong); font-weight: 700; }
+
+  .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header-row h1 { font-size: 28px; font-weight: 700; color: var(--text-strong); margin: 0 0 4px; }
+  .header-row p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 40px; padding: 0 16px; border-radius: var(--radius-xs); border: 1px solid transparent;
+    font-family: var(--font-brand); font-size: 14px; font-weight: 700; cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--color-primary); color: var(--text-on-primary); }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-primary:disabled { background: var(--grey-300); color: var(--text-placeholder); cursor: not-allowed; }
+  .btn-secondary { background: var(--surface-card); color: var(--text-strong); border-color: var(--border-default); }
+  .btn-secondary:hover { border-color: var(--color-primary); }
+
+  .tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border-subtle); }
+  .tab {
+    appearance: none; background: none; border: none; cursor: pointer;
+    font-family: var(--font-brand); font-size: 14px; font-weight: 700; color: var(--text-secondary);
+    padding: 10px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: color var(--dur-fast) var(--ease-standard);
+  }
+  .tab:hover { color: var(--text-strong); }
+  .tab.tab-active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+
+  .board-wrap { flex: 1; overflow-x: auto; padding: 20px 32px 32px; }
+  .board { display: flex; gap: 16px; min-width: max-content; height: 100%; }
+
+  .column { width: 288px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; background: var(--grey-100); border-radius: var(--radius-md); padding: 12px; }
+  .column-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+  .column-title { font-size: 14px; font-weight: 700; color: var(--text-strong); }
+  .column-hint { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+  .badge-count {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 20px;
+    padding: 0 6px; border-radius: var(--radius-pill); background: var(--navy-900); color: var(--white);
+    font-size: 11px; font-weight: 700;
+  }
+
+  .cards { display: flex; flex-direction: column; gap: 10px; }
+
+  .card {
+    background: var(--surface-card); border: 1px solid var(--border-default); border-radius: var(--radius-md);
+    padding: 14px; cursor: pointer; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 8px;
+    transition: border-color var(--dur-fast) var(--ease-standard); text-align: left; width: 100%;
+    font-family: var(--font-brand);
+  }
+  .card:hover, .card:focus-visible { border-color: var(--color-primary); }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--text-strong); }
+  .card-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+  .empty-hint { font-size: 12px; color: var(--text-placeholder); padding: 8px 4px; }
+
+  .tag {
+    display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border-radius: var(--radius-pill);
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .tag-neutral { background: var(--grey-200); color: var(--text-secondary); }
+  .tag-info { background: var(--blue-100); color: var(--blue-700); }
+  .tag-success { background: var(--green-100); color: var(--green-500); }
+
+  .avatar {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 24px; height: 24px; border-radius: 50%; color: var(--white); font-size: 10px; font-weight: 700;
+  }
+  .avatar.avatar-sm { width: 32px; height: 32px; font-size: 12px; }
+
+  .progress { width: 100%; height: 8px; border-radius: var(--radius-pill); background: var(--grey-200); overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-pill); transition: width var(--dur-fast) var(--ease-standard); }
+  .progress.progress-lg { height: 20px; display: flex; align-items: center; }
+  .progress-label-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000; background: rgba(35,51,84,0.45);
+    display: none; align-items: center; justify-content: center; padding: 24px; font-family: var(--font-brand);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    width: 520px; max-width: 100%; max-height: 90vh; display: flex; flex-direction: column;
+    background: var(--surface-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden;
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border-subtle); gap: 12px; }
+  .modal-header h3 { margin: 0; font-size: 20px; font-weight: 700; color: var(--text-strong); }
+  .modal-close { border: none; background: transparent; cursor: pointer; color: var(--text-secondary); padding: 4px; display: inline-flex; border-radius: var(--radius-xs); }
+  .modal-close:hover { color: var(--text-strong); background: var(--grey-100); }
+  .modal-body { padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--border-subtle); background: var(--grey-100); }
+
+  .modal-responsible-row { display: flex; align-items: center; justify-content: space-between; }
+  .modal-responsible { display: flex; align-items: center; gap: 8px; }
+  .modal-responsible-label { font-size: 13px; color: var(--text-secondary); }
+  .modal-responsible-name { font-size: 13px; font-weight: 700; color: var(--text-strong); }
+
+  .checklist-title { font-size: 13px; font-weight: 700; color: var(--text-strong); margin-bottom: 6px; }
+  .checklist-item { padding: 10px 4px; border-bottom: 1px solid var(--border-subtle); }
+  .checklist-item:last-child { border-bottom: none; }
+
+  .checkbox-label { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; font-family: var(--font-brand); }
+  .checkbox-box {
+    width: 18px; height: 18px; border-radius: var(--radius-xs); display: inline-flex; align-items: center; justify-content: center;
+    background: var(--surface-card); box-shadow: inset 0 0 0 1.5px var(--border-strong);
+    transition: background var(--dur-fast) var(--ease-standard); flex-shrink: 0;
+  }
+  .checkbox-box.checked { background: var(--color-primary); box-shadow: none; color: var(--white); }
+  .checkbox-input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .checkbox-text { font-size: 14px; color: var(--text-body); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <nav class="breadcrumb">
+      <span>Societário</span>
+      <span class="icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="current">Abertura de empresa</span>
+    </nav>
+
+    <div class="header-row">
+      <div>
+        <h1>Abertura de empresa</h1>
+        <p>Acompanhe cada empresa pelas etapas do processo. Clique em um card para ver e concluir as tarefas.</p>
+      </div>
+      <button class="btn btn-primary" type="button" title="Em breve">
+        <span class="icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        Novo cliente
+      </button>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" id="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle"></h3>
+      <button class="modal-close" type="button" aria-label="Fechar" data-action="close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<script>
+const PIPELINES = {
+  abertura: {
+    label: 'Abertura de empresa',
+    columns: [
+      { id: 'jornada', label: 'Jornada de abertura', steps: ['Envio da jornada', 'Documentos recebidos', 'Validação dos documentos'] },
+      { id: 'viabilidade', label: 'Viabilidade', steps: ['Nova viabilidade', 'Preencher informações do estabelecimento e empresarial', 'Transmitir viabilidade', 'Salvar protocolo Redesim'] },
+      { id: 'dbe', label: 'Coletor Nacional (DBE)', steps: ['Informar protocolo', 'Dados dos sócios', 'Informações complementares', 'Transmitir DBE', 'Confirmação Receita Federal'] },
+      { id: 'contrato', label: 'Contrato social', steps: ['Informar protocolo', 'Confirmar dados dos sócios e da empresa', 'Formular contrato social', 'Recolher e pagar a DARE', 'Coletar assinatura de documentos e contratos', 'Inserir documentos no sistema', 'Aguardar aprovação e salvar documentos'] },
+      { id: 'certificado', label: 'Certificado digital', steps: ['Enviar informações do cliente para Juliana', 'Informar cliente sobre horários disponíveis', 'Acompanhar agendamento', 'Instalar certificado'] },
+      { id: 'simples', label: 'Opção pelo Simples', steps: ['Confirmar registro da empresa no Simples Nacional', 'Coletar assinaturas'] },
+      { id: 'municipal', label: 'Inscrição municipal', steps: ['Desbloquear CCM', 'Confirmar dados', 'Salvar CCM'] },
+      { id: 'licenciamento', label: 'Licenciamento', steps: ['Preencher dados', 'Responder perguntas sobre licenciamento'] },
+      { id: 'susep', label: 'Cadastro SUSEP', steps: ['Acessar SUSEP do corretor', 'Preencher dados da empresa'] },
+      { id: 'finalizacao', label: 'Finalização', steps: ['Enviar documentos e informações ao cliente', 'Onboarding de processos', 'Assinatura do contrato'] },
+    ],
+  },
+  transferencia: {
+    label: 'Cliente com empresa (transferência)',
+    columns: [
+      { id: 'transferencia', label: 'Transferência de contabilidade', steps: ['Assinatura do contrato', 'Pedido de transferência para a antiga contabilidade', 'Conferir documentação'] },
+      { id: 'onboarding', label: 'Onboarding', steps: ['Iniciar serviços contábeis', 'Configurar acessos do cliente'] },
+      { id: 'notas', label: 'Notas fiscais', hint: 'Dia 1 ao dia 5', steps: ['Apurar comissões', 'Apurar outras receitas', 'Emitir NFs', 'Importar NFs ao sistema'] },
+      { id: 'das', label: 'DAS', hint: 'Dia 10 ao dia 15', steps: ['Transmitir pelo sistema', 'Salvar nos arquivos'] },
+      { id: 'faturamento', label: 'Faturamento anual', steps: ['Apurar faturamento anual', 'Salvar nos arquivos'] },
+      { id: 'pendencias', label: 'Controle de pendências', steps: ['Verificar E-CAC', 'Verificar DUC', 'Verificar DEC'] },
+    ],
+  },
+};
+
+const INITIAL_CLIENTS = [
+  { id: 1, pipeline: 'abertura', name: 'Padaria Bela Vista Ltda', responsible: 'Ana Souza', columnId: 'jornada', checked: [true, false, false] },
+  { id: 2, pipeline: 'abertura', name: 'Studio Fit Treinamentos', responsible: 'Bruno Lima', columnId: 'jornada', checked: [true, true, false] },
+  { id: 3, pipeline: 'abertura', name: 'Clínica OdontoVida', responsible: 'Ana Souza', columnId: 'viabilidade', checked: [true, true, false, false] },
+  { id: 4, pipeline: 'abertura', name: 'Mercado Bom Preço', responsible: 'Carla Nunes', columnId: 'dbe', checked: [true, false, false, false, false] },
+  { id: 5, pipeline: 'abertura', name: 'Café Raiz', responsible: 'Bruno Lima', columnId: 'contrato', checked: [true, true, true, false, false, false, false] },
+  { id: 6, pipeline: 'abertura', name: 'TechNova Soluções', responsible: 'Diego Ramos', columnId: 'certificado', checked: [true, false, false, false] },
+  { id: 7, pipeline: 'abertura', name: 'Loja Veste Bem', responsible: 'Carla Nunes', columnId: 'simples', checked: [true, false] },
+  { id: 8, pipeline: 'abertura', name: 'Auto Center Silva', responsible: 'Ana Souza', columnId: 'municipal', checked: [true, true, false] },
+  { id: 9, pipeline: 'abertura', name: 'Corretora Segura Mais', responsible: 'Diego Ramos', columnId: 'susep', checked: [true, false] },
+  { id: 10, pipeline: 'abertura', name: 'Espaço Zen Terapias', responsible: 'Bruno Lima', columnId: 'finalizacao', checked: [true, true, false] },
+  { id: 11, pipeline: 'transferencia', name: 'Farmácia Vida Plena', responsible: 'Carla Nunes', columnId: 'transferencia', checked: [true, false, false] },
+  { id: 12, pipeline: 'transferencia', name: 'Construtora Horizonte', responsible: 'Diego Ramos', columnId: 'transferencia', checked: [true, true, false] },
+  { id: 13, pipeline: 'transferencia', name: 'Distribuidora Nortesul', responsible: 'Ana Souza', columnId: 'onboarding', checked: [true, false] },
+  { id: 14, pipeline: 'transferencia', name: 'Salão Beleza Rara', responsible: 'Bruno Lima', columnId: 'notas', checked: [true, true, false, false] },
+  { id: 15, pipeline: 'transferencia', name: 'Transportes Ipê', responsible: 'Carla Nunes', columnId: 'notas', checked: [true, false, false, false] },
+  { id: 16, pipeline: 'transferencia', name: 'Escritório Contábil Prime', responsible: 'Diego Ramos', columnId: 'das', checked: [true, false] },
+  { id: 17, pipeline: 'transferencia', name: 'Padaria Sabor & Arte', responsible: 'Ana Souza', columnId: 'faturamento', checked: [false, false] },
+  { id: 18, pipeline: 'transferencia', name: 'Imobiliária Alto Padrão', responsible: 'Bruno Lima', columnId: 'pendencias', checked: [true, true, false] },
+];
+
+const AVATAR_COLORS = ['#0061F4', '#00959C', '#9747FF', '#EF6C00', '#15C170', '#F5103A'];
+const CHECK_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const state = {
+  activeTab: 'abertura',
+  selectedId: null,
+  clients: INITIAL_CLIENTS.map((c) => ({ ...c, checked: c.checked.slice() })),
+};
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+function getInitials(name) {
+  const parts = name.trim().split(/\s+/);
+  const letters = parts.length === 1 ? parts[0].slice(0, 2) : parts[0][0] + parts[1][0];
+  return letters.toUpperCase();
+}
+
+function avatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function statusOf(checked) {
+  const done = checked.filter(Boolean).length;
+  if (done === 0) return { pct: 0, tagStatus: 'neutral', tagLabel: 'Não iniciado' };
+  if (done === checked.length) return { pct: 100, tagStatus: 'success', tagLabel: 'Concluído' };
+  return { pct: Math.round((done / checked.length) * 100), tagStatus: 'info', tagLabel: 'Em andamento' };
+}
+
+function setActiveTab(id) {
+  state.activeTab = id;
+  state.selectedId = null;
+  render();
+}
+
+function openCard(id) {
+  state.selectedId = id;
+  render();
+}
+
+function closeModal() {
+  state.selectedId = null;
+  render();
+}
+
+function toggleStep(clientId, idx) {
+  const client = state.clients.find((c) => c.id === clientId);
+  if (!client) return;
+  client.checked[idx] = !client.checked[idx];
+  render();
+}
+
+function moveCard(clientId, dir) {
+  const client = state.clients.find((c) => c.id === clientId);
+  if (!client) return;
+  const cols = PIPELINES[client.pipeline].columns;
+  const idx = cols.findIndex((c) => c.id === client.columnId);
+  const nextIdx = idx + dir;
+  if (nextIdx < 0 || nextIdx >= cols.length) return;
+  const nextCol = cols[nextIdx];
+  client.columnId = nextCol.id;
+  client.checked = nextCol.steps.map(() => false);
+  render();
+}
+
+function render() {
+  renderTabs();
+  renderBoard();
+  renderModal();
+}
+
+function renderTabs() {
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = Object.keys(PIPELINES).map((id) => (
+    `<button type="button" class="tab${id === state.activeTab ? ' tab-active' : ''}" data-tab="${id}">${escapeHtml(PIPELINES[id].label)}</button>`
+  )).join('');
+}
+
+function cardHtml(c) {
+  const st = statusOf(c.checked);
+  return `
+    <button type="button" class="card" data-card="${c.id}">
+      <div class="card-title">${escapeHtml(c.name)}</div>
+      <div class="card-row">
+        <span class="tag tag-${st.tagStatus}">${escapeHtml(st.tagLabel)}</span>
+        <span class="avatar" style="background:${avatarColor(c.responsible)}" title="${escapeHtml(c.responsible)}">${getInitials(c.responsible)}</span>
+      </div>
+      <div class="progress"><div class="progress-fill" style="width:${st.pct}%"></div></div>
+    </button>
+  `;
+}
+
+function renderBoard() {
+  const pipeline = PIPELINES[state.activeTab];
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = pipeline.columns.map((col) => {
+    const colClients = state.clients.filter((c) => c.pipeline === state.activeTab && c.columnId === col.id);
+    return `
+      <div class="column">
+        <div class="column-head">
+          <div>
+            <div class="column-title">${escapeHtml(col.label)}</div>
+            ${col.hint ? `<div class="column-hint">${escapeHtml(col.hint)}</div>` : ''}
+          </div>
+          <span class="badge-count">${colClients.length}</span>
+        </div>
+        <div class="cards">
+          ${colClients.map(cardHtml).join('')}
+          ${colClients.length === 0 ? '<div class="empty-hint">Nenhum cliente nesta etapa</div>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderModal() {
+  const overlay = document.getElementById('modalOverlay');
+  const client = state.selectedId != null ? state.clients.find((c) => c.id === state.selectedId) : null;
+
+  if (!client) {
+    overlay.classList.remove('open');
+    document.getElementById('modalTitle').textContent = '';
+    document.getElementById('modalBody').innerHTML = '';
+    document.getElementById('modalFooter').innerHTML = '';
+    return;
+  }
+
+  const cols = PIPELINES[client.pipeline].columns;
+  const idx = cols.findIndex((c) => c.id === client.columnId);
+  const col = cols[idx];
+  const st = statusOf(client.checked);
+  const isFirst = idx === 0;
+  const isLast = idx === cols.length - 1;
+  const allChecked = client.checked.every(Boolean);
+
+  overlay.classList.add('open');
+  document.getElementById('modalTitle').textContent = `${client.name} — ${col.label}`;
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-responsible-row">
+      <div class="modal-responsible">
+        <span class="avatar avatar-sm" style="background:${avatarColor(client.responsible)}">${getInitials(client.responsible)}</span>
+        <div>
+          <div class="modal-responsible-label">Responsável</div>
+          <div class="modal-responsible-name">${escapeHtml(client.responsible)}</div>
+        </div>
+      </div>
+      <span class="tag tag-${st.tagStatus}">${escapeHtml(st.tagLabel)}</span>
+    </div>
+
+    <div>
+      <div class="progress-label-row"><span>Progresso da etapa</span><span>${st.pct}%</span></div>
+      <div class="progress progress-lg"><div class="progress-fill" style="width:${st.pct}%"></div></div>
+    </div>
+
+    <div>
+      <div class="checklist-title">Checklist da etapa</div>
+      ${col.steps.map((label, i) => `
+        <div class="checklist-item">
+          <label class="checkbox-label">
+            <span class="checkbox-input-wrap" style="position:relative;display:inline-flex">
+              <input type="checkbox" class="checkbox-input" data-toggle="${i}" ${client.checked[i] ? 'checked' : ''}>
+              <span class="checkbox-box${client.checked[i] ? ' checked' : ''}">${client.checked[i] ? CHECK_ICON : ''}</span>
+            </span>
+            <span class="checkbox-text">${escapeHtml(label)}</span>
+          </label>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  const footerParts = [];
+  if (!isFirst) footerParts.push('<button type="button" class="btn btn-secondary" data-action="prev">Etapa anterior</button>');
+  if (!isLast) footerParts.push(`<button type="button" class="btn btn-primary" data-action="next" ${allChecked ? '' : 'disabled'}>Concluir e avançar</button>`);
+  if (isLast) footerParts.push('<button type="button" class="btn btn-primary" data-action="close">Fechar</button>');
+  document.getElementById('modalFooter').innerHTML = footerParts.join('');
+}
+
+document.addEventListener('click', (e) => {
+  const tabBtn = e.target.closest('[data-tab]');
+  if (tabBtn) { setActiveTab(tabBtn.dataset.tab); return; }
+
+  const cardBtn = e.target.closest('[data-card]');
+  if (cardBtn) { openCard(Number(cardBtn.dataset.card)); return; }
+
+  const actionBtn = e.target.closest('[data-action]');
+  if (actionBtn) {
+    const action = actionBtn.dataset.action;
+    if (action === 'close') closeModal();
+    if (action === 'prev') moveCard(state.selectedId, -1);
+    if (action === 'next') moveCard(state.selectedId, 1);
+    return;
+  }
+
+  if (e.target.id === 'modalOverlay') { closeModal(); return; }
+});
+
+document.addEventListener('change', (e) => {
+  const input = e.target.closest('[data-toggle]');
+  if (input) toggleStep(state.selectedId, Number(input.dataset.toggle));
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.selectedId != null) closeModal();
+});
+
+render();
+</script>
+</body>
+</html>

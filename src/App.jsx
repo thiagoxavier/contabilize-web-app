@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Sidebar, Topbar } from './components/sidebar';
 import { SenhasPage, Toast } from './components/senhas';
 import { ClientesPage } from './components/clientes';
+import { AberturaEmpresaPage } from './components/abertura-empresa';
 import { TweaksPanel, TweakSection, TweakRadio, TweakColor, useTweaks } from './components/tweaks-panel';
 import { LoginScreen } from './components/login';
 import { decodeJwt, apiRequest } from './utils/api';
+import { PassosProvider } from './contexts/PassosContext';
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "view": "tabela",
@@ -61,11 +63,21 @@ export default function App() {
         if (telasAcessiveis.length > 0) {
           const hasSeguros = telasAcessiveis.some(t => t.codigo === 'geren_seguros');
           const hasUsuarios = telasAcessiveis.some(t => t.codigo === 'geren_usuarios');
-          
-          if (hasSeguros) {
-            setActiveTab('senhas');
-          } else if (hasUsuarios) {
-            setActiveTab('clientes');
+          const hasAbertura = telasAcessiveis.some(t => t.codigo === 'abertura_empresa' || t.codigo === 'abertura');
+
+          const isAdmin = user?.roles?.some(r => {
+            const lower = String(r).toLowerCase();
+            return lower === 'admin' || lower === 'administrador';
+          }) || user?.subtitle?.toLowerCase().includes('admin');
+
+          if (!isAdmin) {
+            if (hasSeguros) {
+              setActiveTab('senhas');
+            } else if (hasUsuarios) {
+              setActiveTab('clientes');
+            } else if (hasAbertura) {
+              setActiveTab('abertura');
+            }
           }
         }
       } catch (err) {
@@ -87,46 +99,51 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <Sidebar active={activeTab} counts={{ senhas: counts }} user={user} onLogout={handleLogout} telas={telas} onNavigate={setActiveTab} />
-      <main className="main">
-        <Topbar crumbs={["Central do cliente", activeTab === 'senhas' ? "Senhas" : "Clientes"]} />
-        {activeTab === 'senhas' && (
-          <SenhasPage view={t.view} setView={(v)=>setTweak("view", v)} onToast={setToastMsg} onCountChange={setCounts} />
-        )}
-        {activeTab === 'clientes' && (
-          <ClientesPage onToast={setToastMsg} />
-        )}
-      </main>
+    <PassosProvider>
+      <div className="app">
+        <Sidebar active={activeTab} counts={{ senhas: counts }} user={user} onLogout={handleLogout} telas={telas} onNavigate={setActiveTab} />
+        <main className="main">
+          <Topbar crumbs={["Central do cliente", activeTab === 'senhas' ? "Senhas" : activeTab === 'clientes' ? "Clientes" : "Abertura de empresa"]} />
+          {activeTab === 'senhas' && (
+            <SenhasPage view={t.view} setView={(v)=>setTweak("view", v)} onToast={setToastMsg} onCountChange={setCounts} />
+          )}
+          {activeTab === 'clientes' && (
+            <ClientesPage onToast={setToastMsg} />
+          )}
+          {activeTab === 'abertura' && (
+            <AberturaEmpresaPage user={user} />
+          )}
+        </main>
 
-      <Toast msg={toastMsg} onDone={() => setToastMsg(null)} />
+        <Toast msg={toastMsg} onDone={() => setToastMsg(null)} />
 
-      <TweaksPanel title="Tweaks">
-        <TweakSection label="Visualização">
-          <TweakRadio
-            label="Layout"
-            value={t.view}
-            options={[
-              { value: "tabela", label: "Tabela" },
-              { value: "cards",  label: "Cards"  },
-              { value: "lista",  label: "Lista"  },
-            ]}
-            onChange={v => setTweak("view", v)}
-          />
-        </TweakSection>
-        <TweakSection label="Cor de destaque">
-          <TweakColor
-            label="Accent"
-            value={t.accent}
-            options={[
-              ["#B89150", "#9B742D"],
-              ["#13A170", "#0d7050"],
-              ["#3A5867", "#173241"],
-            ]}
-            onChange={v => setTweak("accent", v)}
-          />
-        </TweakSection>
-      </TweaksPanel>
-    </div>
+        <TweaksPanel title="Tweaks">
+          <TweakSection label="Visualização">
+            <TweakRadio
+              label="Layout"
+              value={t.view}
+              options={[
+                { value: "tabela", label: "Tabela" },
+                { value: "cards",  label: "Cards"  },
+                { value: "lista",  label: "Lista"  },
+              ]}
+              onChange={v => setTweak("view", v)}
+            />
+          </TweakSection>
+          <TweakSection label="Cor de destaque">
+            <TweakColor
+              label="Accent"
+              value={t.accent}
+              options={[
+                ["#B89150", "#9B742D"],
+                ["#13A170", "#0d7050"],
+                ["#3A5867", "#173241"],
+              ]}
+              onChange={v => setTweak("accent", v)}
+            />
+          </TweakSection>
+        </TweaksPanel>
+      </div>
+    </PassosProvider>
   );
 }
