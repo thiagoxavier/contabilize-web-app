@@ -1,20 +1,41 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Projeto: Frontend "Portal do Cliente" do Contabilize Seguro — SPA que consome a API REST em
+  api-central-cliente. Domínio: login corporativo + MFA, gestão segura de credenciais de
+  seguradoras (LGPD/SUSEP), gestão de empresas e seu fluxo (Pipeline -> Etapa -> Passo ->
+  MensagemPasso), administração de usuários. White-label por tenant.
+
+  Stack: React 19 (Hooks, Context, Refs) + Vite 8. JS PURO — não há TypeScript. CSS vanilla com
+  CSS Custom Properties para tema (--brand-primary, --brand-primary-deep, --brand-bg-panel,
+  --gold, ...). Deploy via Docker + Nginx. Lint ESLint (react-hooks). Estrutura em src/:
+  main.jsx, App.jsx (estado global: sessão, telas/permissões, aba ativa), components/,
+  contexts/ (PassosContext), utils/ (api.js + *Api.js por domínio), data/, assets/.
+
+  Regras (obrigatórias):
+  - Todo acesso HTTP passa por utils/api.js (apiRequest) ou utils/*Api.js — nunca fetch solto.
+  - apiRequest injeta Bearer (localStorage auth_token, fallback sessionStorage temp_token) e faz
+    logout automático em 401. Não reimplementar isso.
+  - Erro ao usuário vem de errorData.erro || errorData.mensagem (backend usa a chave "mensagem").
+  - Auth: JWT em localStorage['auth_token']; MFA usa token temporário em sessionStorage['temp_token'].
+  - RBAC por tela: GET /ControleAcesso/usuarios/{userId}/telas-acessiveis retorna códigos
+    (geren_seguros, geren_usuarios, ...) que controlam visibilidade na Sidebar — é UI apenas;
+    a autorização real é no backend.
+  - Componentes funcionais + Hooks; estado global em App.jsx / Context, sem nova lib de estado.
+  - Cores/tema via CSS variables, nunca hardcode. Textos em pt-BR.
+  - Credenciais de seguradora são sensíveis: só no fluxo autorizado, nunca em console/query string.
+
+  Regras completas: CONVENTIONS.md. Descrição do sistema: CLAUDE.md. Contrato com a API:
+  ../docs/contexto/CONTRATO-API.md — se a feature precisar de endpoint que não existe, isso é
+  mudança na API (proponha lá primeiro).
+
+rules:
+  proposal:
+    - Sempre incluir seção "Não-objetivos".
+    - Se a feature depende de endpoint/DTO da API, referenciar o contrato e sinalizar se ele já existe.
+  tasks:
+    - Reutilizar utils/*Api.js; criar wrapper novo em utils/ se faltar, sem duplicar auth/401.
+    - Incluir task de "npm run lint" e "npm run build" limpos.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
