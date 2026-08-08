@@ -46,6 +46,7 @@ export function PipelineDatasPanel({ empresaId, pipeline, onUpdate }) {
   // Carrega dados se não fornecidos via props
   useEffect(() => {
     if (pipeline) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPipelineData(pipeline);
       setLoading(false);
       return;

@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Icon } from './icons';
 import { apiRequest } from '../utils/api';
+import { usuariosApi } from '../utils/usuariosApi';
+import { ModalGerenciarCamposCustomizados } from './ModalGerenciarCamposCustomizados';
+import { EmpresaTabsPanel } from './EmpresaTabsPanel';
 
 // ---------- Utilities ----------
 function initials(name) {
@@ -35,6 +38,7 @@ export function ClientesPage({ onToast }) {
   const [modal, setModal] = useState(null); // { mode: 'new'|'edit', data? }
   const [tempPasswordModal, setTempPasswordModal] = useState(null); // { name, password }
   const [cofreUser, setCofreUser] = useState(null);
+  const [adminCamposModal, setAdminCamposModal] = useState(false);
   const perPage = 10;
 
   const loadStarted = useRef(false);
@@ -89,8 +93,11 @@ export function ClientesPage({ onToast }) {
           body: JSON.stringify({
             nome: data.nome,
             email: data.email,
+            telefone: data.telefone || null,
+            cargo: data.cargo || null,
             mfaHabilitado: data.mfaHabilitado,
-            ativo: data.ativo
+            ativo: data.ativo,
+            camposCustomizados: data.camposCustomizados || {}
           })
         });
 
@@ -126,7 +133,10 @@ export function ClientesPage({ onToast }) {
             nome: data.nome,
             email: data.email,
             senha: data.senha,
-            mfaHabilitado: data.mfaHabilitado
+            telefone: data.telefone || null,
+            cargo: data.cargo || null,
+            mfaHabilitado: data.mfaHabilitado,
+            camposCustomizados: data.camposCustomizados || {}
           })
         });
 
@@ -135,6 +145,15 @@ export function ClientesPage({ onToast }) {
           await apiRequest(`/Usuarios/${newUser.id}/roles/${data.roleId}`, {
             method: 'POST'
           });
+        }
+
+        // Upload photo if selected on creation
+        if (data.fotoFile) {
+          try {
+            await usuariosApi.enviarFotoUsuario(newUser.id, data.fotoFile);
+          } catch {
+            // Toast err handling gracefully
+          }
         }
 
         onToast("Usuário criado com sucesso");
@@ -186,6 +205,10 @@ export function ClientesPage({ onToast }) {
           <p className="subtitle">Gerencie as contas de acesso da corretora, perfis de segurança e autenticação em duas etapas (MFA).</p>
         </div>
         <div className="page-header-actions">
+          <button className="btn secondary" onClick={() => setAdminCamposModal(true)}>
+            <Icon name="sliders" size={15} />
+            Gerenciar campos customizados
+          </button>
           <button className="btn primary" onClick={() => setModal({ mode: "new" })}>
             <Icon name="plus" size={15} />
             Novo usuário
@@ -355,6 +378,7 @@ export function ClientesPage({ onToast }) {
           roles={roles}
           onClose={() => setModal(null)} 
           onSave={handleSave} 
+          onToast={onToast}
         />
       )}
 
@@ -373,6 +397,13 @@ export function ClientesPage({ onToast }) {
           onToast={onToast}
         />
       )}
+
+      {adminCamposModal && (
+        <ModalGerenciarCamposCustomizados
+          onClose={() => setAdminCamposModal(false)}
+          onToast={onToast}
+        />
+      )}
     </div>
   );
 }
@@ -380,16 +411,44 @@ export function ClientesPage({ onToast }) {
 // ============================================================
 // MODAL — Add / Edit User
 // ============================================================
-function UserModal({ mode, data, roles, onClose, onSave }) {
-  const [form, setForm] = useState(data || {
-    nome: "", email: "", senha: "", roleId: "", mfaHabilitado: false, ativo: true
+function UserModal({ mode, data, roles, onClose, onSave, onToast }) {
+  const [form, setForm] = useState(data ? {
+    ...data,
+    telefone: data.telefone || "",
+    cargo: data.cargo || "",
+    camposCustomizados: data.camposCustomizados || {}
+  } : {
+    nome: "", email: "", senha: "", telefone: "", cargo: "", roleId: "", mfaHabilitado: false, ativo: true, camposCustomizados: {}
   });
+
+  const [userTab, setUserTab] = useState('dados');
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [camposCustomizadosDefs, setCamposCustomizadosDefs] = useState([]);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [fotoUrl, setFotoUrl] = useState(data?.fotoUrl || null);
+  const fileInputRef = useRef(null);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const setCustomField = (defId, val) => setForm(f => ({
+    ...f,
+    camposCustomizados: { ...f.camposCustomizados, [defId]: val }
+  }));
 
   const overlayRef = useRef(null);
   const shouldClose = useRef(false);
+
+  useEffect(() => {
+    async function loadDefs() {
+      try {
+        const defs = await usuariosApi.listarCamposCustomizados();
+        setCamposCustomizadosDefs(defs || []);
+      } catch (err) {
+        onToast?.(err.message || "Erro ao carregar campos customizados.");
+      }
+    }
+    loadDefs();
+  }, [onToast]);
 
   const handleMouseDown = (e) => {
     if (e.target === overlayRef.current) {
@@ -412,11 +471,65 @@ function UserModal({ mode, data, roles, onClose, onSave }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      onToast?.("Formato de imagem inválido. Escolha JPG, PNG ou WEBP.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      onToast?.("A imagem deve ter no máximo 2MB.");
+      return;
+    }
+
+    if (mode === 'edit' && form.id) {
+      setUploadingFoto(true);
+      try {
+        const res = await usuariosApi.enviarFotoUsuario(form.id, file);
+        const newUrl = res?.fotoUrl || URL.createObjectURL(file);
+        setFotoUrl(newUrl);
+        set("fotoUrl", newUrl);
+        onToast?.("Foto atualizada com sucesso.");
+      } catch (err) {
+        onToast?.(err.message || "Erro ao enviar foto do usuário.");
+      } finally {
+        setUploadingFoto(false);
+      }
+    } else {
+      const localUrl = URL.createObjectURL(file);
+      setFotoUrl(localUrl);
+      set("fotoFile", file);
+    }
+  };
+
+  const handleRemoveFoto = async () => {
+    if (mode === 'edit' && form.id) {
+      try {
+        await usuariosApi.removerFotoUsuario(form.id);
+        setFotoUrl(null);
+        set("fotoUrl", null);
+        onToast?.("Foto removida com sucesso.");
+      } catch (err) {
+        onToast?.(err.message || "Erro ao remover foto.");
+      }
+    } else {
+      setFotoUrl(null);
+      set("fotoFile", null);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.nome || !form.email || (mode === 'new' && !form.senha)) return;
     onSave(form);
   };
+
+  const currentRoleObj = roles.find(r => r.id === form.roleId || r.nome === form.originalRole);
+  const roleNameDisplay = currentRoleObj ? currentRoleObj.nome : (form.originalRole || "Sem Perfil");
 
   return (
     <div 
@@ -425,19 +538,158 @@ function UserModal({ mode, data, roles, onClose, onSave }) {
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
     >
-      <div className="modal" onMouseDown={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()}>
+      <div className="modal" style={{ maxWidth: 850, width: '90vw' }} onMouseDown={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()}>
         <form onSubmit={handleSubmit}>
-          <div className="modal-head">
-            <div>
-              <h3>{mode === "edit" ? "Editar usuário" : "Novo usuário do portal"}</h3>
-              <div className="sub">Defina o nome, e-mail e nível de permissão (Perfil) do colaborador.</div>
+          {mode === "edit" ? (
+            <div className="modal-head" style={{ borderBottom: '1px solid var(--rule-2)', paddingBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%' }}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: '50%', overflow: 'hidden',
+                    background: 'linear-gradient(135deg, var(--ink-600) 0%, var(--ink-800) 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontSize: '18px', fontWeight: '700'
+                  }}>
+                    {fotoUrl ? (
+                      <img src={fotoUrl} alt={form.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      initials(form.nome)
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--gold)' }}>
+                    {roleNameDisplay}
+                  </div>
+                  <h3 style={{ margin: '2px 0 4px', fontSize: '18px', color: 'var(--ink-900)' }}>{form.nome || 'Editar Usuário'}</h3>
+                  <div style={{ fontSize: '12px', color: 'var(--muted)', display: 'flex', flexWrap: 'wrap', gap: '8px 12px' }}>
+                    <span>{form.email}</span>
+                    {form.telefone && <span>• {form.telefone}</span>}
+                    {form.cargo && <span>• {form.cargo}</span>}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="tag-cat" style={{
+                    background: form.ativo ? 'var(--green-tint)' : 'var(--danger-tint)',
+                    color: form.ativo ? 'var(--green-deep)' : 'var(--danger)',
+                    borderColor: form.ativo ? 'var(--green-soft)' : 'var(--danger-soft)',
+                    fontWeight: 600
+                  }}>
+                    {form.ativo ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+              </div>
+              <button className="modal-close" type="button" onClick={onClose} style={{ position: 'absolute', top: 16, right: 16 }}>
+                <Icon name="chevDown" size={18} style={{ transform: "rotate(45deg)" }} />
+              </button>
             </div>
-            <button className="modal-close" type="button" onClick={onClose}>
-              <Icon name="chevDown" size={18} style={{ transform: "rotate(45deg)" }} />
-            </button>
+          ) : (
+            <div className="modal-head">
+              <div>
+                <h3>Novo usuário do portal</h3>
+                <div className="sub">Defina o nome, e-mail e nível de permissão (Perfil) do colaborador.</div>
+              </div>
+              <button className="modal-close" type="button" onClick={onClose}>
+                <Icon name="chevDown" size={18} style={{ transform: "rotate(45deg)" }} />
+              </button>
+            </div>
+          )}
+
+          {/* Barra de Abas do Cliente */}
+          <div style={{ display: 'flex', gap: 6, padding: '0 24px', borderBottom: '1px solid var(--rule-2)', background: '#FAFAFA' }}>
+            {[
+              { id: 'dados', label: 'Dados Gerais', icon: 'user' },
+              { id: 'anotacoes', label: 'Anotações', icon: 'fileText' },
+              { id: 'atividades', label: 'Atividades', icon: 'checkSquare' },
+              { id: 'emails', label: 'E-mails', icon: 'mail' },
+              { id: 'arquivos', label: 'Arquivos', icon: 'folder' },
+              { id: 'documentos', label: 'Documentos', icon: 'shield' }
+            ].map(t => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setUserTab(t.id)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: userTab === t.id ? '2px solid var(--gold)' : '2px solid transparent',
+                  color: userTab === t.id ? 'var(--ink-900)' : 'var(--muted)',
+                  padding: '10px 8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5
+                }}
+              >
+                <Icon name={t.icon} size={14} />
+                {t.label}
+              </button>
+            ))}
           </div>
 
-          <div className="modal-body">
+          {userTab !== 'dados' && (
+            <EmpresaTabsPanel 
+              empresaId={form.id || 'novo'} 
+              empresaNome={form.nome}
+              activeTab={userTab}
+              hideNav={true}
+              onToast={onToast} 
+            />
+          )}
+
+          <div className="modal-body" style={{ display: userTab === 'dados' ? 'flex' : 'none', maxHeight: '65vh', minHeight: '380px', overflowY: 'auto', gap: 14 }}>
+            {/* Foto de perfil */}
+            <div className="field-group" style={{ background: 'var(--paper)', padding: '12px 14px', borderRadius: 10 }}>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-900)' }}>Foto de Perfil</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: '50%', overflow: 'hidden',
+                  background: 'linear-gradient(135deg, var(--ink-600) 0%, var(--ink-800) 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: '14px', fontWeight: '600'
+                }}>
+                  {fotoUrl ? (
+                    <img src={fotoUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    initials(form.nome)
+                  )}
+                </div>
+
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  accept="image/jpeg,image/png,image/webp" 
+                  style={{ display: 'none' }} 
+                  onChange={handleFileChange}
+                />
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button 
+                    type="button" 
+                    className="btn secondary btn-sm" 
+                    disabled={uploadingFoto}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {uploadingFoto ? "Enviando..." : "Alterar foto"}
+                  </button>
+                  {fotoUrl && (
+                    <button 
+                      type="button" 
+                      className="btn ghost btn-sm" 
+                      style={{ color: 'var(--danger)' }}
+                      onClick={handleRemoveFoto}
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="field-group">
               <label>Nome Completo</label>
               <input 
@@ -458,6 +710,26 @@ function UserModal({ mode, data, roles, onClose, onSave }) {
                 onChange={e => set("email", e.target.value)} 
                 placeholder="mariana@suacorretora.com.br" 
               />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="field-group">
+                <label>Telefone</label>
+                <input 
+                  value={form.telefone} 
+                  onChange={e => set("telefone", e.target.value)} 
+                  placeholder="(11) 99999-9999" 
+                />
+              </div>
+
+              <div className="field-group">
+                <label>Cargo / Departamento</label>
+                <input 
+                  value={form.cargo} 
+                  onChange={e => set("cargo", e.target.value)} 
+                  placeholder="Ex: Gerente Comercial" 
+                />
+              </div>
             </div>
 
             {mode === 'new' && (
@@ -525,7 +797,76 @@ function UserModal({ mode, data, roles, onClose, onSave }) {
               </select>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+            {/* Campos Customizados (Dinâmicos) */}
+            {camposCustomizadosDefs.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--rule-2)', paddingTop: 12, marginTop: 4 }}>
+                <div style={{ font: "600 13px 'Be Vietnam Pro'", color: "var(--ink-900)" }}>Campos adicionais</div>
+                {camposCustomizadosDefs.map(def => {
+                  const val = form.camposCustomizados?.[def.id] ?? "";
+                  return (
+                    <div className="field-group" key={def.id}>
+                      <label style={{ fontSize: '12px', fontWeight: 600 }}>
+                        {def.nome} {def.obrigatorio && <span style={{ color: 'var(--danger)' }}>*</span>}
+                      </label>
+
+                      {def.tipo === 'Texto' && (
+                        <input
+                          type="text"
+                          required={def.obrigatorio}
+                          value={val}
+                          onChange={e => setCustomField(def.id, e.target.value)}
+                        />
+                      )}
+
+                      {def.tipo === 'Numero' && (
+                        <input
+                          type="number"
+                          required={def.obrigatorio}
+                          value={val}
+                          onChange={e => setCustomField(def.id, e.target.value)}
+                        />
+                      )}
+
+                      {def.tipo === 'Data' && (
+                        <input
+                          type="date"
+                          required={def.obrigatorio}
+                          value={val}
+                          onChange={e => setCustomField(def.id, e.target.value)}
+                        />
+                      )}
+
+                      {def.tipo === 'Selecao' && (
+                        <select
+                          required={def.obrigatorio}
+                          value={val}
+                          onChange={e => setCustomField(def.id, e.target.value)}
+                        >
+                          <option value="">Selecione...</option>
+                          {(def.opcoes || []).map((op, idx) => (
+                            <option key={idx} value={op}>{op}</option>
+                          ))}
+                        </select>
+                      )}
+
+                      {def.tipo === 'SimNao' && (
+                        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={!!val}
+                            onChange={e => setCustomField(def.id, e.target.checked)}
+                            style={{ accentColor: "var(--ink-900)" }}
+                          />
+                          <span style={{ fontSize: '13px', color: 'var(--ink-900)' }}>Sim</span>
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
               <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "var(--paper)", borderRadius: 10, cursor: "pointer" }}>
                 <input 
                   type="checkbox" 

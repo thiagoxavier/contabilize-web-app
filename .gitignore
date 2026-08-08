@@ -26,3 +26,10 @@ dist-ssr
 # Backups
 backup/
 
+# Environment variables
+.env
+.env.*
+.env.example
+
+
+

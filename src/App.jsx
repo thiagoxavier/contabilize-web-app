@@ -7,6 +7,7 @@ import { TweaksPanel, TweakSection, TweakRadio, TweakColor, useTweaks } from './
 import { LoginScreen } from './components/login';
 import { decodeJwt, apiRequest } from './utils/api';
 import { PassosProvider } from './contexts/PassosContext';
+import { EnvironmentBanner } from './components/EnvironmentBanner';
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "view": "tabela",
@@ -95,11 +96,17 @@ export default function App() {
   };
 
   if (!user) {
-    return <LoginScreen onLoginSuccess={setUser} />;
+    return (
+      <>
+        <EnvironmentBanner />
+        <LoginScreen onLoginSuccess={setUser} />
+      </>
+    );
   }
 
   return (
     <PassosProvider>
+      <EnvironmentBanner />
       <div className="app">
         <Sidebar active={activeTab} counts={{ senhas: counts }} user={user} onLogout={handleLogout} telas={telas} onNavigate={setActiveTab} />
         <main className="main">

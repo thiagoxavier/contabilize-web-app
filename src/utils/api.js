@@ -1,5 +1,9 @@
-const API_BASE_URL = 'https://poc-contabilize-api-client.wcar95.easypanel.host/api';
-//const API_BASE_URL = 'https://localhost:7027/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
+  import.meta.env.DEV
+    ? 'https://localhost:7027/api'
+    : 'https://poc-contabilize-api-client.wcar95.easypanel.host/api'
+);
+
 
 
 export function decodeJwt(token) {
@@ -21,9 +25,11 @@ export function decodeJwt(token) {
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('auth_token') || sessionStorage.getItem('temp_token');
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

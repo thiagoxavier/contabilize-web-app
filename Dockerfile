@@ -13,6 +13,8 @@ RUN npm ci
 COPY . .
 
 # Executa o build de produção (gera a pasta /app/dist)
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build
 
 # Estágio final de execução (Nginx Alpine)
