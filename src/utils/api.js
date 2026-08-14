@@ -1,7 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
+const API_BASE_URL = window.__ENV__?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || (
   import.meta.env.DEV
     ? 'https://localhost:7027/api'
-    : 'https://poc-contabilize-api-client.wcar95.easypanel.host/api'
+    : 'https://prd-contabilize-api-client-dev.wcar95.easypanel.host/api'
 );
 
 

@@ -39,6 +39,10 @@ COPY --from=build /app/dist /usr/share/nginx/html/
 # Copia a configuração personalizada do Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copia o script de entrypoint e dá permissão de execução
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expõe a porta padrão do Nginx
 EXPOSE 80
 
@@ -46,5 +50,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD wget -q --spider http://localhost/ || exit 1
 
-# Comando para rodar o Nginx no foreground
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

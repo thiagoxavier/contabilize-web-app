@@ -1,8 +1,9 @@
 export function EnvironmentBanner() {
-  const envVal = (import.meta.env.VITE_ENV || import.meta.env.VITE_AMBIENTE || '').toLowerCase();
+  const envVal = (window.__ENV__?.VITE_ENV || import.meta.env.VITE_ENV || import.meta.env.VITE_AMBIENTE || '').toLowerCase();
+  const isTestFlag = window.__ENV__?.VITE_IS_TEST ?? import.meta.env.VITE_IS_TEST;
   const isTest = 
-    import.meta.env.VITE_IS_TEST === 'true' ||
-    import.meta.env.VITE_IS_TEST === '1' ||
+    isTestFlag === 'true' ||
+    isTestFlag === '1' ||
     ['homologacao', 'homolog', 'teste', 'staging', 'test'].includes(envVal);
 
   if (!isTest) return null;
