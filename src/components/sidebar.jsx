@@ -22,6 +22,7 @@ export function Sidebar({ active = "senhas", counts = {}, user, onLogout, telas 
   const allItems = [
     { group: "Operação", links: [
       { id: "senhas", label: "Senhas", icon: "key", count: counts.senhas, screenCode: "geren_seguros" },
+      { id: "kanban", label: "Kanban", icon: "shuffle", count: counts.kanban, screenCode: "geren_seguros" },
       { id: "clientes", label: "Clientes", icon: "users", count: counts.clientes, screenCode: "geren_usuarios" },
       { id: "abertura", label: "Abertura de empresa", icon: "file", count: counts.abertura, screenCode: "abertura_empresa" },
     ]},

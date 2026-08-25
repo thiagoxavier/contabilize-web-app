@@ -3,6 +3,7 @@ import { Sidebar, Topbar } from './components/sidebar';
 import { SenhasPage, Toast } from './components/senhas';
 import { ClientesPage } from './components/clientes';
 import { AberturaEmpresaPage } from './components/abertura-empresa';
+import { KanbanPage } from './components/KanbanPage';
 import { TweaksPanel, TweakSection, TweakRadio, TweakColor, useTweaks } from './components/tweaks-panel';
 import { LoginScreen } from './components/login';
 import { decodeJwt, apiRequest } from './utils/api';
@@ -110,12 +111,15 @@ export default function App() {
       <div className="app">
         <Sidebar active={activeTab} counts={{ senhas: counts }} user={user} onLogout={handleLogout} telas={telas} onNavigate={setActiveTab} />
         <main className="main">
-          <Topbar crumbs={["Central do cliente", activeTab === 'senhas' ? "Senhas" : activeTab === 'clientes' ? "Clientes" : "Abertura de empresa"]} />
+          <Topbar crumbs={["Central do cliente", activeTab === 'senhas' ? "Senhas" : activeTab === 'clientes' ? "Clientes" : activeTab === 'kanban' ? "Kanban" : "Abertura de empresa"]} />
           {activeTab === 'senhas' && (
             <SenhasPage view={t.view} setView={(v)=>setTweak("view", v)} onToast={setToastMsg} onCountChange={setCounts} />
           )}
           {activeTab === 'clientes' && (
             <ClientesPage onToast={setToastMsg} />
+          )}
+          {activeTab === 'kanban' && (
+            <KanbanPage user={user} onToast={setToastMsg} />
           )}
           {activeTab === 'abertura' && (
             <AberturaEmpresaPage user={user} />

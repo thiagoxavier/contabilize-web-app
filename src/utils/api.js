@@ -4,8 +4,6 @@ const API_BASE_URL = window.__ENV__?.VITE_API_BASE_URL || import.meta.env.VITE_A
     : 'https://prd-contabilize-api-client-dev.wcar95.easypanel.host/api'
 );
 
-
-
 export function decodeJwt(token) {
   try {
     const base64Url = token.split('.')[1];

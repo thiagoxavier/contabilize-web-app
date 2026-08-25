@@ -38,6 +38,28 @@ export const passosApi = {
     });
   },
 
+  // Board completo de uma empresa (Kanban), com filtros combináveis opcionais
+  // (busca em título/descrição, etapa, tag, responsável). "pipelineId" corresponde
+  // ao EmpresaId — ver nota de desvio do PRD do Kanban em docs/contexto/CONTRATO-API.md.
+  listarPorPipeline: (pipelineId, filtros = {}) => {
+    const params = new URLSearchParams();
+    if (filtros.busca) params.set('busca', filtros.busca);
+    if (filtros.etapaId) params.set('etapaId', filtros.etapaId);
+    if (filtros.tag) params.set('tag', filtros.tag);
+    if (filtros.responsavelId) params.set('responsavelId', filtros.responsavelId);
+    const query = params.toString();
+    return apiRequest(`/pipelines/${pipelineId}/passos${query ? `?${query}` : ''}`);
+  },
+
+  // Move o passo (drag-and-drop) para outra etapa. Síncrono: o chamador deve aguardar
+  // a resposta antes de refletir a mudança na UI (PRD do Kanban §5.3/§8).
+  moverPasso: (passoId, dto) => {
+    return apiRequest(`/passos/${passoId}/mover`, {
+      method: 'PUT',
+      body: JSON.stringify(dto),
+    });
+  },
+
   // --- Mensagens do Passo ---
   listarMensagens: (passoId) => {
     return apiRequest(`/passos/${passoId}/mensagens`);
