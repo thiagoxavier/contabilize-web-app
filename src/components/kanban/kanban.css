@@ -1,0 +1,191 @@
+/* Kanban Multi-Planos — prefixo "kp-" (o board antigo por Empresa usa "kb-"). */
+
+.kp-board-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;
+}
+.kp-board-toolbar form{display:flex;gap:8px;align-items:center}
+.kp-board-toolbar form input{
+  background:#fff;border:1px solid var(--rule);border-radius:10px;padding:10px 12px;
+  font:500 13px/1 'Be Vietnam Pro';color:var(--ink-900);outline:none;min-width:220px;
+}
+.kp-board-toolbar form input:focus{border-color:var(--gold)}
+
+.kp-filterbar{
+  display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px;
+  padding:12px 14px;background:var(--paper);border:1px solid var(--rule);border-radius:12px;
+}
+.kp-filterbar-field{display:flex;flex-direction:column;gap:4px}
+.kp-filterbar-field label{font:600 11px/1 'Be Vietnam Pro';letter-spacing:.3px;color:var(--muted)}
+.kp-filterbar-field select,.kp-filterbar-field input{
+  background:#fff;border:1px solid var(--rule);border-radius:8px;padding:8px 10px;
+  font:500 13px/1 'Be Vietnam Pro';color:var(--ink-900);outline:none;min-width:150px;
+}
+.kp-filterbar-field select:focus,.kp-filterbar-field input:focus{border-color:var(--gold)}
+.kp-filterbar-clear{margin-left:auto}
+@media (max-width:640px){
+  .kp-filterbar{flex-direction:column;align-items:stretch}
+  .kp-filterbar-field select,.kp-filterbar-field input{min-width:0;width:100%}
+  .kp-filterbar-clear{margin-left:0}
+}
+
+.kp-board-wrap{width:100%;overflow-x:auto;padding-bottom:8px}
+.kp-board{display:flex;gap:16px;align-items:flex-start;min-width:max-content;min-height:60vh}
+
+.kp-column{
+  width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;
+  background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:12px;
+  border-top:4px solid var(--rule);transition:background .15s, box-shadow .15s;
+}
+.kp-column.kp-over{background:var(--gold-tint);box-shadow:inset 0 0 0 2px var(--gold-deep)}
+.kp-column-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px}
+.kp-column-title{
+  font:700 13px/1.2 'Be Vietnam Pro';letter-spacing:.2px;color:var(--ink-900);
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.kp-column-title input{
+  font:700 13px/1.2 'Be Vietnam Pro';color:var(--ink-900);border:1px solid var(--gold);
+  border-radius:6px;padding:4px 6px;background:#fff;outline:none;width:100%;
+}
+.kp-count{
+  font:600 11px/1 'Be Vietnam Pro';color:var(--muted);background:#fff;border:1px solid var(--rule);
+  border-radius:999px;padding:4px 8px;
+}
+.kp-count.kp-limite{color:var(--danger);border-color:var(--danger)}
+.kp-column-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.kp-icon-btn{
+  width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:8px;color:var(--muted);transition:background .15s, color .15s;
+}
+.kp-icon-btn:hover{background:#fff;color:var(--ink-900)}
+.kp-icon-btn.danger:hover{color:var(--danger);background:var(--danger-tint)}
+.kp-icon-btn:focus-visible{outline:2px solid var(--gold-deep);outline-offset:2px}
+
+.kp-cards{display:flex;flex-direction:column;gap:8px;min-height:80px}
+.kp-empty-col{
+  font:500 12px/1.4 'Be Vietnam Pro';color:var(--muted);text-align:center;padding:18px 8px;
+  border:1px dashed var(--rule);border-radius:10px;
+}
+
+.kp-card{
+  background:#fff;border:1px solid var(--rule);border-radius:12px;padding:12px;
+  display:flex;flex-direction:column;gap:8px;cursor:grab;
+  box-shadow:var(--shadow-xs);transition:box-shadow .15s, border-color .15s, opacity .15s;
+  touch-action:none;
+}
+.kp-card:hover{border-color:#c2cad0;box-shadow:var(--shadow-lg)}
+.kp-card:focus-visible{outline:2px solid var(--gold-deep);outline-offset:2px}
+.kp-card.kp-dragging{opacity:.45;cursor:grabbing}
+.kp-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.kp-card-title{font:600 13px/1.35 'Be Vietnam Pro';color:var(--ink-900);word-break:break-word}
+.kp-prio{
+  flex-shrink:0;font:600 10px/1 'Be Vietnam Pro';letter-spacing:.6px;text-transform:uppercase;
+  border-radius:999px;padding:4px 7px;
+}
+.kp-prio.alta{background:var(--danger-tint);color:var(--danger)}
+.kp-prio.media{background:var(--gold-tint);color:var(--gold-deep)}
+.kp-prio.baixa{background:var(--paper);color:var(--green-deep)}
+.kp-card-desc{
+  font:400 12px/1.45 'Be Vietnam Pro';color:var(--muted);
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.kp-tags{display:flex;flex-wrap:wrap;gap:4px}
+.kp-tag{
+  font:600 10px/1 'Be Vietnam Pro';color:var(--ink-700);background:var(--paper);
+  border:1px solid var(--rule);border-radius:6px;padding:4px 6px;
+}
+.kp-card-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:500 11px/1 'Be Vietnam Pro';color:var(--muted)}
+.kp-card-foot .kp-atrasado{color:var(--danger)}
+.kp-card-foot .kp-assignee{display:inline-flex;align-items:center;gap:4px}
+
+.kp-add-card{
+  display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;
+  border:1px dashed var(--rule);border-radius:10px;font:600 12px/1 'Be Vietnam Pro';color:var(--muted);
+  transition:background .15s, color .15s, border-color .15s;
+}
+.kp-add-card:hover{background:#fff;color:var(--ink-900);border-color:#c2cad0}
+.kp-add-form{display:flex;flex-direction:column;gap:6px}
+.kp-add-form input{
+  background:#fff;border:1px solid var(--gold);border-radius:10px;padding:9px 10px;
+  font:500 13px/1 'Be Vietnam Pro';color:var(--ink-900);outline:none;
+}
+.kp-add-form-actions{display:flex;gap:6px;justify-content:flex-end}
+
+/* Modal do card */
+.kp-overlay{
+  position:fixed;inset:0;background:rgba(15,23,32,.45);display:flex;align-items:center;justify-content:center;
+  z-index:60;padding:16px;
+}
+.kp-modal{
+  background:#fff;border-radius:16px;width:min(760px,100%);max-height:90vh;display:flex;flex-direction:column;
+  box-shadow:var(--shadow-lg);animation:panelEnter 150ms cubic-bezier(0.4,0,0.2,1) forwards;
+}
+.kp-modal-head{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--rule)}
+.kp-modal-head input{
+  flex:1;font:700 20px/1.2 'Be Vietnam Pro';letter-spacing:-.3px;color:var(--ink-900);
+  border:1px solid transparent;border-radius:8px;padding:6px 8px;outline:none;
+}
+.kp-modal-head input:focus{border-color:var(--gold);background:var(--paper)}
+.kp-modal-body{padding:18px 20px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.kp-modal-body .kp-span-2{grid-column:1 / -1}
+.kp-modal-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;
+  border-top:1px solid var(--rule);background:var(--paper);border-radius:0 0 16px 16px;
+}
+.kp-modal-foot .kp-right{display:flex;gap:8px}
+@media (max-width:640px){
+  .kp-modal-body{grid-template-columns:1fr}
+  .kp-column{width:260px}
+}
+
+/* Chat */
+.kp-chat{display:flex;flex-direction:column;gap:10px;border:1px solid var(--rule);border-radius:12px;padding:12px;background:var(--paper)}
+.kp-chat h4{font:700 12px/1 'Be Vietnam Pro';letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.kp-chat-list{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;padding-right:4px}
+.kp-chat-vazio{font:500 12px/1.4 'Be Vietnam Pro';color:var(--muted);text-align:center;padding:14px}
+.kp-chat-form{display:flex;gap:8px}
+.kp-chat-form input{
+  flex:1;background:#fff;border:1px solid var(--rule);border-radius:10px;padding:10px 12px;
+  font:500 13px/1 'Be Vietnam Pro';color:var(--ink-900);outline:none;
+}
+.kp-chat-form input:focus{border-color:var(--gold)}
+.kp-msg{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
+.kp-msg-head{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}
+.kp-msg-autor{font:700 12px/1 'Be Vietnam Pro';color:var(--ink-900)}
+.kp-msg-data{font:500 11px/1 'Be Vietnam Pro';color:var(--muted)}
+.kp-msg-texto{font:400 13px/1.45 'Be Vietnam Pro';color:var(--ink-700);white-space:pre-wrap;word-break:break-word}
+
+/* Lista de planos */
+.kp-planos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.kp-plano{
+  background:#fff;border:1px solid var(--rule);border-radius:14px;padding:18px 20px;
+  display:flex;flex-direction:column;gap:10px;text-align:left;cursor:pointer;
+  transition:border-color .15s, box-shadow .15s, transform .05s;
+}
+.kp-plano:hover{border-color:#c2cad0;box-shadow:var(--shadow-lg)}
+.kp-plano:active{transform:translateY(1px)}
+.kp-plano:focus-visible{outline:2px solid var(--gold-deep);outline-offset:2px}
+.kp-plano-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.kp-plano-head h3{font:700 16px/1.25 'Be Vietnam Pro';letter-spacing:-.2px;color:var(--ink-900)}
+.kp-plano-acoes{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.kp-plano p{font:400 13px/1.45 'Be Vietnam Pro';color:var(--muted);min-height:2.9em;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.kp-plano-foot{display:flex;align-items:center;justify-content:space-between;font:500 11px/1 'Be Vietnam Pro';color:var(--muted)}
+.kp-plano-foot strong{color:var(--green-deep);font-weight:700}
+.kp-form-card{padding:18px 20px;display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
+.kp-form-edicao{cursor:default;display:flex;flex-direction:column;gap:14px}
+.kp-form-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* Minhas Atividades — prefixo "ma-" */
+.ma-grupo{margin-bottom:22px}
+.ma-grupo-titulo{
+  display:flex;align-items:center;gap:8px;font:700 14px/1 'Be Vietnam Pro';
+  letter-spacing:.2px;color:var(--ink-900);margin-bottom:10px;
+}
+.ma-grupo-titulo.ma-atrasado{color:var(--danger)}
+.ma-table{table-layout:auto}
+.ma-row{cursor:pointer}
+.ma-table select{
+  border:1px solid var(--rule);border-radius:8px;padding:7px 10px;font:500 13px/1 'Be Vietnam Pro';
+  background:var(--paper);color:var(--ink-900);max-width:180px;
+}
+.ma-table select:focus{border-color:var(--gold)}

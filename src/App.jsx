@@ -3,12 +3,29 @@ import { Sidebar, Topbar } from './components/sidebar';
 import { SenhasPage, Toast } from './components/senhas';
 import { ClientesPage } from './components/clientes';
 import { AberturaEmpresaPage } from './components/abertura-empresa';
-import { KanbanPage } from './components/KanbanPage';
+import KanbanPlanos from './pages/admin/kanban/index';
+import KanbanBoardPage from './pages/admin/kanban/board';
+import MinhasAtividadesPage from './pages/admin/kanban/minhas-atividades';
+import { usePlanos } from './hooks/usePlanos';
 import { TweaksPanel, TweakSection, TweakRadio, TweakColor, useTweaks } from './components/tweaks-panel';
 import { LoginScreen } from './components/login';
 import { decodeJwt, apiRequest } from './utils/api';
 import { PassosProvider } from './contexts/PassosContext';
 import { EnvironmentBanner } from './components/EnvironmentBanner';
+
+// Mesma regra de "admin" usada na Sidebar (gate de UI; a autorização real é no backend).
+function ehAdministrador(user) {
+  return Boolean(
+    user?.roles?.some((r) => {
+      const lower = String(r).toLowerCase();
+      return lower === 'admin' || lower === 'administrador';
+    }) || user?.subtitle?.toLowerCase().includes('admin')
+  );
+}
+
+// Abas do Kanban Multi-Planos: "planos" (gerenciar) e "plano:<id>" (quadro de um plano).
+const PREFIXO_PLANO = 'plano:';
+const planoIdDaAba = (aba) => (aba.startsWith(PREFIXO_PLANO) ? aba.slice(PREFIXO_PLANO.length) : null);
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "view": "tabela",
@@ -22,6 +39,16 @@ export default function App() {
   const [counts, setCounts] = useState(0);
   const [telas, setTelas] = useState([]);
   const [activeTab, setActiveTab] = useState('senhas');
+
+  const isAdmin = ehAdministrador(user);
+  const planosKanban = usePlanos(Boolean(user) && isAdmin);
+  const planoAtivoId = planoIdDaAba(activeTab);
+  const planoAtivo = planoAtivoId ? planosKanban.planos.find((p) => p.id === planoAtivoId) : null;
+
+  const excluirPlano = async (planoId) => {
+    await planosKanban.deletar(planoId);
+    if (planoIdDaAba(activeTab) === planoId) setActiveTab('planos');
+  };
 
   // Restore session
   useEffect(() => {
@@ -109,17 +136,50 @@ export default function App() {
     <PassosProvider>
       <EnvironmentBanner />
       <div className="app">
-        <Sidebar active={activeTab} counts={{ senhas: counts }} user={user} onLogout={handleLogout} telas={telas} onNavigate={setActiveTab} />
+        <Sidebar
+          active={activeTab}
+          counts={{ senhas: counts }}
+          user={user}
+          onLogout={handleLogout}
+          telas={telas}
+          onNavigate={setActiveTab}
+          planos={isAdmin ? planosKanban.planos : null}
+          mostrarAtividades={isAdmin}
+        />
         <main className="main">
-          <Topbar crumbs={["Central do cliente", activeTab === 'senhas' ? "Senhas" : activeTab === 'clientes' ? "Clientes" : activeTab === 'kanban' ? "Kanban" : "Abertura de empresa"]} />
+          <Topbar crumbs={
+            planoAtivoId
+              ? ["Central do cliente", "Planos", planoAtivo?.nome || "Plano"]
+              : ["Central do cliente", { senhas: "Senhas", clientes: "Clientes", planos: "Planos", "minhas-atividades": "Minhas Atividades" }[activeTab] || "Abertura de empresa"]
+          } />
+          {activeTab === 'planos' && isAdmin && (
+            <KanbanPlanos
+              planos={planosKanban.planos}
+              loading={planosKanban.loading}
+              erro={planosKanban.erro}
+              onCriar={planosKanban.criar}
+              onEditar={planosKanban.atualizar}
+              onDeletar={excluirPlano}
+              onRecarregar={planosKanban.recarregar}
+              onAbrir={(planoId) => setActiveTab(PREFIXO_PLANO + planoId)}
+              onToast={setToastMsg}
+            />
+          )}
+          {planoAtivoId && isAdmin && (
+            <KanbanBoardPage
+              plano={planoAtivo}
+              onVoltar={() => setActiveTab('planos')}
+              onToast={setToastMsg}
+            />
+          )}
+          {activeTab === 'minhas-atividades' && isAdmin && (
+            <MinhasAtividadesPage onToast={setToastMsg} />
+          )}
           {activeTab === 'senhas' && (
             <SenhasPage view={t.view} setView={(v)=>setTweak("view", v)} onToast={setToastMsg} onCountChange={setCounts} />
           )}
           {activeTab === 'clientes' && (
             <ClientesPage onToast={setToastMsg} />
-          )}
-          {activeTab === 'kanban' && (
-            <KanbanPage user={user} onToast={setToastMsg} />
           )}
           {activeTab === 'abertura' && (
             <AberturaEmpresaPage user={user} />

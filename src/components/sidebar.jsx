@@ -1,7 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from './icons';
 
-export function Sidebar({ active = "senhas", counts = {}, user, onLogout, telas = [], onNavigate }) {
+/**
+ * `planos`: lista de planos do Kanban Multi-Planos (só Administrador). Quando
+ * informada (mesmo vazia), a Sidebar mostra o grupo "Planos" com um único link
+ * fixo "Gerenciar planos" (a lista de planos em si fica na página de destino).
+ * `null` esconde o grupo.
+ * `mostrarAtividades`: mesma regra de acesso de `planos` — mostra o item de menu
+ * próprio "Minhas Atividades" (visão agregada de cards de todos os planos).
+ */
+export function Sidebar({ active = "senhas", counts = {}, user, onLogout, telas = [], onNavigate, planos = null, mostrarAtividades = false }) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
@@ -22,7 +30,6 @@ export function Sidebar({ active = "senhas", counts = {}, user, onLogout, telas 
   const allItems = [
     { group: "Operação", links: [
       { id: "senhas", label: "Senhas", icon: "key", count: counts.senhas, screenCode: "geren_seguros" },
-      { id: "kanban", label: "Kanban", icon: "shuffle", count: counts.kanban, screenCode: "geren_seguros" },
       { id: "clientes", label: "Clientes", icon: "users", count: counts.clientes, screenCode: "geren_usuarios" },
       { id: "abertura", label: "Abertura de empresa", icon: "file", count: counts.abertura, screenCode: "abertura_empresa" },
     ]},
@@ -46,6 +53,24 @@ export function Sidebar({ active = "senhas", counts = {}, user, onLogout, telas 
     });
     return { ...sec, links: filteredLinks };
   }).filter(sec => sec.links.length > 0);
+
+  if (mostrarAtividades) {
+    items.push({
+      group: "Atividades",
+      links: [
+        { id: "minhas-atividades", label: "Minhas Atividades", icon: "clock" },
+      ],
+    });
+  }
+
+  if (planos) {
+    items.push({
+      group: "Planos",
+      links: [
+        { id: "planos", label: "Gerenciar planos", icon: "plus" },
+      ],
+    });
+  }
 
   return (
     <aside className="sidebar">
